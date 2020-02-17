@@ -1,88 +1,42 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:syndik_app/screens/wrapper.dart';
+import 'package:syndik_app/services/auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:syndik_app/models/user.dart';
 
 void main() => runApp(MyApp());
 
-
 class MyApp extends StatelessWidget {
+  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Baby Names',
-      home: MyHomePage(),
-    );
-  }
-}
 
-class MyHomePage extends StatefulWidget {
-  @override
-  _MyHomePageState createState() {
-    return _MyHomePageState();
-  }
-}
+    return StreamProvider<User>.value(
+      value: AuthService().user,
+      child: MaterialApp(
+          theme: ThemeData(
+            // Define the default brightness and colors.
+            brightness: Brightness.light,
+            primaryColor: Colors.amber,
+            accentColor: Colors.greenAccent,
+            backgroundColor: Colors.amberAccent,
+            scaffoldBackgroundColor : Colors.amberAccent,
+            buttonColor : Colors.cyan,
 
-class _MyHomePageState extends State<MyHomePage> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Baby Name Votes')),
-      body: _buildBody(context),
-    );
-  }
+            // Define the default font family.
+            fontFamily: 'Calibri',
 
-  Widget _buildBody(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: Firestore.instance.collection('baby').snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return LinearProgressIndicator();
+            // Define the default TextTheme. Use this to specify the default
+            // text styling for headlines, titles, bodies of text, and more.
+            textTheme: TextTheme(
+              headline5: TextStyle(fontSize: 62.0, fontWeight: FontWeight.bold),
+              headline6: TextStyle(fontSize: 36.0, fontStyle: FontStyle.italic),
+              bodyText2: TextStyle(fontSize: 14.0, fontFamily: 'Calibri'),
 
-        return _buildList(context, snapshot.data.documents);
-      },
-    );
-  }
-
-  Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
-    return ListView(
-      padding: const EdgeInsets.only(top: 20.0),
-      children: snapshot.map((data) => _buildListItem(context, data)).toList(),
-    );
-  }
-
-  Widget _buildListItem(BuildContext context, DocumentSnapshot data) {
-    final record = Record.fromSnapshot(data);
-
-    return Padding(
-      key: ValueKey(record.name),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(5.0),
-        ),
-        child: ListTile(
-          title: Text(record.name),
-          trailing: Text(record.votes.toString()),
-            onTap: () => record.reference.updateData({'votes': FieldValue.increment(1)})
-        ),
+            ),
+          ),
+        home: Wrapper(),
       ),
     );
   }
-}
-
-class Record {
-  final String name;
-  final int votes;
-  final DocumentReference reference;
-
-  Record.fromMap(Map<String, dynamic> map, {this.reference})
-      : assert(map['name'] != null),
-        assert(map['votes'] != null),
-        name = map['name'],
-        votes = map['votes'];
-
-  Record.fromSnapshot(DocumentSnapshot snapshot)
-      : this.fromMap(snapshot.data, reference: snapshot.reference);
-
-  @override
-  String toString() => "Record<$name:$votes>";
 }
